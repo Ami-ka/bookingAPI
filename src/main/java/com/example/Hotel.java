@@ -17,17 +17,7 @@ abstract class Hotel {
         users.add(user);
     }
 
-    public static String login(User user){
-        
-        for(User i : users){
-            if ((i.get_login().equals(user.get_login())) && (i.get_password_hash() == user.get_password_hash() )){
-                return "login sucessful";
-                
-            }
-            
-        }
-        return "Wrong login or password";
-    }
+    
 
 
     static void showHotelINFO(){

@@ -26,8 +26,8 @@ public class HotelBookingSystem {
 
     public static void main(String[] args) throws IOException{
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        server.createContext("/Room", new RoomHandler());
-        server.createContext("/User", new UserHandler());
+        server.createContext("/room", new RoomHandler());
+        server.createContext("/user", new UserHandler());
         
         server.setExecutor(null);
         server.start();
@@ -62,6 +62,7 @@ public class HotelBookingSystem {
                     room.put("price", rs.getDouble("price"));
                     room.put("bookStatus", rs.getString("bookStatus"));
                     room.put("roomType", rs.getString("roomType"));
+                    room.put("user_id", rs.getInt("user_id"));
                     rooms.put(room);
                 }
             } catch (SQLException e) {
@@ -78,13 +79,15 @@ public class HotelBookingSystem {
             Double price = json.getDouble("price");
             String password = json.getString("bookStatus");
             String roomType = json.getString("roomType");
+            int user_id = json.getInt("user_id");
 
             try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
                     PreparedStatement pstmt = conn.prepareStatement(
-                            "INSERT INTO rooms (price, bookStatus, roomType) VALUES (?, ?, ?) RETURNING id_room")) {
+                            "INSERT INTO rooms (price, bookStatus, roomType, user_id) VALUES (?, ?, ?, ?) RETURNING id_room")) {
                 pstmt.setDouble(1, price);
                 pstmt.setString(2, password);
                 pstmt.setString(3, roomType);
+                pstmt.setInt(4,user_id);
                 
                 
                 ResultSet rs = pstmt.executeQuery();
@@ -119,13 +122,13 @@ public class HotelBookingSystem {
             JSONArray users = new JSONArray();
             try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD)){
                 Statement stm = con.createStatement();
-                ResultSet rs = stm.executeQuery("SELECT * FROM rooms");
+                ResultSet rs = stm.executeQuery("SELECT * FROM users");
                 while (rs.next()) {
                     JSONObject user = new JSONObject();
-                    user.put("id", rs.getInt("id"));
-                    user.put("login", rs.getString("login"));
-                    user.put("password", rs.getString("password"));
-                    users.put(users);
+                    user.put("user_id", rs.getInt("user_id"));
+                    user.put("user_login", rs.getString("user_login"));
+                    user.put("user_password", rs.getString("user_password"));
+                    users.put(user);
                 }
             }     
             catch (SQLException e) {
@@ -141,17 +144,17 @@ public class HotelBookingSystem {
             String requestBody = readRequestBody(exchange);
             JSONObject json = new JSONObject(requestBody);
 
-            String login = json.getString("login");
-            String password = json.getString("password");
+            String user_login = json.getString("user_login");
+            String user_password = json.getString("user_password");
 
             try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
-                 PreparedStatement pstmt= con.prepareStatement("INSERT INTO users (login, password) VALUES(?,?) RETERNING id")) {
-                    pstmt.setString(1, login);
-                    pstmt.setString(2, password);
+                 PreparedStatement pstmt= con.prepareStatement("INSERT INTO users (user_login, user_password) VALUES(?,?) RETURNING user_id")) {
+                    pstmt.setString(1, user_login);
+                    pstmt.setString(2, user_password);
                     ResultSet rs = pstmt.executeQuery();
                     if (rs.next()) {
-                        int id = rs.getInt("id");
-                        sendResponse(exchange, 201, "{\"id\":" + id + "}");
+                        int user_id = rs.getInt("user_id");
+                        sendResponse(exchange, 201, "{\"user_id\":" + user_id + "}");
                     }
             } catch (Exception e) {
                 e.printStackTrace();
